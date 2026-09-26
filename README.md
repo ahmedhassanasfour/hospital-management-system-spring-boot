@@ -90,7 +90,7 @@ graph TD
         CacheManager --> Redis[(Redis 7 In-Memory Cache)]
     end
 
-    StompBroker -->|Push to /topic/notifications/{userId}| Client
+    StompBroker -->|"Push to /topic/notifications/{userId}"| Client
 ```
 
 ### Key Design Patterns
