@@ -15,7 +15,8 @@
 
 1. [Project Overview](#-project-overview)
 2. [Architecture & Design Patterns](#️-architecture--design-patterns)
-3. [Tech Stack](#️-tech-stack)
+3. [Database Schema & ERD](#-database-schema--erd)
+4. [Tech Stack](#️-tech-stack)
 4. [Directory & Package Structure](#-directory--package-structure)
 5. [Core Business Modules](#-core-business-modules)
    - [1. Authentication & Security](#1-authentication--security)
