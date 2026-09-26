@@ -103,6 +103,241 @@ graph TD
 
 ---
 
+## 📊 Database Schema & ERD
+
+The diagram below reflects the actual JPA entity relationships in the project.
+
+```mermaid
+erDiagram
+    USERS ||--o| PATIENTS : "has one profile"
+    USERS ||--o| DOCTORS : "has one profile"
+    USERS ||--o{ NOTIFICATIONS : "receives"
+    USERS ||--o{ AUDIT_LOGS : "generates"
+
+    DOCTORS }o--o{ BRANCHES : "works at (via DOCTOR_BRANCHES)"
+    DOCTOR_BRANCHES ||--o{ DOCTOR_SCHEDULES : "has schedule"
+    DOCTOR_BRANCHES ||--o{ APPOINTMENTS : "held at"
+
+    DOCTORS ||--o{ APPOINTMENTS : "attends"
+    PATIENTS ||--o{ APPOINTMENTS : "books"
+
+    APPOINTMENTS ||--o| MEDICAL_RECORDS : "produces one"
+    APPOINTMENTS ||--o| PRESCRIPTIONS : "has one"
+    APPOINTMENTS ||--o{ LAB_ORDERS : "triggers"
+    APPOINTMENTS ||--o{ INVOICES : "billed via"
+
+    PRESCRIPTIONS ||--o{ PRESCRIPTION_ITEMS : "contains"
+    PRESCRIPTION_ITEMS }o--|| MEDICINES : "references"
+
+    LAB_ORDERS ||--o| LAB_RESULTS : "yields one"
+    LAB_ORDERS }o--|| LAB_TESTS : "of type"
+
+    PATIENTS ||--o{ INVOICES : "billed to"
+    INVOICES ||--o{ INVOICE_ITEMS : "contains"
+    INVOICES ||--o{ PAYMENTS : "settled by"
+    INVOICE_ITEMS }o--o| LAB_ORDERS : "linked to"
+    INVOICE_ITEMS }o--o| PRESCRIPTION_ITEMS : "linked to"
+
+    PAYMENTS ||--o| IDEMPOTENCY_RECORDS : "guarded by"
+
+    PATIENTS ||--o{ MEDICAL_FILES : "owns"
+    MEDICAL_FILES }o--o| PRESCRIPTIONS : "attached to"
+    MEDICAL_FILES }o--o| LAB_RESULTS : "attached to"
+
+    USERS {
+        bigint id PK
+        string email UK
+        string password
+        string firstName
+        string lastName
+        string role "ADMIN DOCTOR RECEPTIONIST PATIENT"
+        boolean enabled
+        datetime createdAt
+    }
+    PATIENTS {
+        bigint id PK
+        bigint user_id FK UK
+        string nationalId UK
+        string phone
+        date dateOfBirth
+        string gender
+        string address
+    }
+    DOCTORS {
+        bigint id PK
+        bigint user_id FK UK
+        string specialization
+        string licenseNumber UK
+        string phone
+        string bio
+    }
+    BRANCHES {
+        bigint id PK
+        string name UK
+        string address
+        string phone
+        string email UK
+        boolean enabled
+    }
+    DOCTOR_BRANCHES {
+        bigint id PK
+        bigint doctor_id FK
+        bigint branch_id FK
+        boolean enabled
+    }
+    DOCTOR_SCHEDULES {
+        bigint id PK
+        bigint doctor_branch_id FK
+        string dayOfWeek
+        time startTime
+        time endTime
+    }
+    APPOINTMENTS {
+        bigint id PK
+        bigint doctor_id FK
+        bigint patient_id FK
+        bigint doctor_branch_id FK
+        date date
+        time startTime
+        time endTime
+        string status "PENDING CONFIRMED COMPLETED CANCELLED"
+        string notes
+    }
+    MEDICAL_RECORDS {
+        bigint id PK
+        bigint appointment_id FK UK
+        bigint patient_id FK
+        bigint doctor_id FK
+        string diagnosis
+        string symptoms
+        string notes
+        string treatment
+    }
+    MEDICINES {
+        bigint id PK
+        string name UK
+        string description
+        boolean active
+        datetime createdAt
+    }
+    PRESCRIPTIONS {
+        bigint id PK
+        bigint patient_id FK
+        bigint doctor_id FK
+        bigint appointment_id FK UK
+        string notes
+        datetime prescribedAt
+    }
+    PRESCRIPTION_ITEMS {
+        bigint id PK
+        bigint prescription_id FK
+        bigint medicine_id FK
+        string dosage
+        string frequency
+        string duration
+        string instructions
+    }
+    LAB_TESTS {
+        bigint id PK
+        string name UK
+        string description
+        boolean active
+        datetime createdAt
+    }
+    LAB_ORDERS {
+        bigint id PK
+        bigint patient_id FK
+        bigint doctor_id FK
+        bigint appointment_id FK
+        bigint lab_test_id FK
+        string status "ORDERED IN_PROGRESS COMPLETED CANCELLED"
+        string notes
+        datetime orderedAt
+        datetime completedAt
+    }
+    LAB_RESULTS {
+        bigint id PK
+        bigint lab_order_id FK UK
+        string resultValue
+        string referenceRange
+        string notes
+        datetime resultDate
+    }
+    INVOICES {
+        bigint id PK
+        string invoiceNumber UK
+        bigint patient_id FK
+        bigint appointment_id FK
+        string status "DRAFT UNPAID PAID CANCELLED"
+        decimal totalAmount
+        string notes
+        datetime issuedAt
+        datetime dueAt
+    }
+    INVOICE_ITEMS {
+        bigint id PK
+        bigint invoice_id FK
+        string type "CONSULTATION LAB MEDICINE OTHER"
+        string description
+        decimal quantity
+        decimal unitPrice
+        decimal totalPrice
+        bigint lab_order_id FK
+        bigint prescription_item_id FK
+    }
+    PAYMENTS {
+        bigint id PK
+        bigint invoice_id FK
+        string paymentReference UK
+        decimal amount
+        string method "CASH CARD INSURANCE"
+        string status "PENDING COMPLETED FAILED REFUNDED"
+        datetime createdAt
+        datetime paidAt
+        string notes
+    }
+    IDEMPOTENCY_RECORDS {
+        bigint id PK
+        string idempotencyKey UK
+        bigint paymentId
+        datetime createdAt
+    }
+    NOTIFICATIONS {
+        bigint id PK
+        bigint user_id FK
+        string type
+        string title
+        string message
+        boolean read
+        datetime createdAt
+    }
+    MEDICAL_FILES {
+        bigint id PK
+        string originalName
+        string storedName UK
+        string contentType
+        bigint size
+        string storagePath
+        string fileType
+        bigint patient_id FK
+        bigint prescription_id FK
+        bigint lab_result_id FK
+        datetime uploadedAt
+    }
+    AUDIT_LOGS {
+        bigint id PK
+        bigint user_id FK
+        string action
+        string entityType
+        bigint entityId
+        string description
+        string ipAddress
+        datetime createdAt
+    }
+```
+
+---
+
 ## 🛠️ Tech Stack
 
 | Technology / Library | Version | Purpose |
