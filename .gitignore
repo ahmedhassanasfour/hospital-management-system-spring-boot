@@ -1,0 +1,45 @@
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Docker / Environment secrets ###
+# Ignore all real .env files and any environment-specific secret files.
+# NEVER commit actual credentials to source control.
+.env
+.env.*
+*.env
+
+# But always track the example/template file — operators need it.
+!.env.example
+uploads/
+logs/

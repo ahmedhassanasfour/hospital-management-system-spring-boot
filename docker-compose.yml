@@ -1,0 +1,138 @@
+services:
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # PostgreSQL 17
+  # ─────────────────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:17-alpine
+    container_name: hospital-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: hospital_db
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+
+    ports:
+      # Host 5433 → Container 5432.
+      # Port 5433 is used on the host to avoid conflict with any other PostgreSQL
+      # instance (e.g. the ecommerce project) running on the default 5432.
+      - "5433:5432"
+
+    volumes:
+      - hospital_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d hospital_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+    networks:
+      - hospital-network
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Redis 7
+  # ─────────────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: hospital-redis
+    restart: unless-stopped
+
+    # Redis is not exposed to the host by default.
+    # Only the app service communicates with it on the internal Docker network.
+    # Uncomment the ports block below if you need direct host access for debugging.
+    # ports:
+    #   - "6379:6379"
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    networks:
+      - hospital-network
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Spring Boot Application
+  # ─────────────────────────────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hospital-app
+    restart: unless-stopped
+
+    ports:
+      - "8081:8081"
+
+    environment:
+      # ── Spring Profile ────────────────────────────────────────────────────────
+      # Activates application-prod.properties; disables SQL logging, Swagger, etc.
+      SPRING_PROFILES_ACTIVE: prod
+
+      # ── Database ──────────────────────────────────────────────────────────────
+      # Use the Docker service name 'postgres' as the DB host.
+      # Never use 'localhost' for container-to-container communication.
+      DB_URL: jdbc:postgresql://postgres:5432/hospital_db
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      # ── Redis ─────────────────────────────────────────────────────────────────
+      # Use the Docker service name 'redis' as the Redis host.
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      # ── JWT ───────────────────────────────────────────────────────────────────
+      # REQUIRED: generate with: openssl rand -base64 64
+      # Minimum 32 characters (256 bits) for HS256.
+      JWT_SECRET: ${JWT_SECRET}
+
+      # ── Admin Seeder ──────────────────────────────────────────────────────────
+      # REQUIRED: change this on first run and update the admin account immediately.
+      ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD}
+
+      # ── Email (optional — app starts without it) ──────────────────────────────
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+
+      # ── WebSocket ─────────────────────────────────────────────────────────────
+      # REQUIRED: comma-separated list of allowed frontend origins.
+      WEBSOCKET_ALLOWED_ORIGINS: ${WEBSOCKET_ALLOWED_ORIGINS}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    healthcheck:
+      # /actuator/health/readiness checks DB + Redis + readinessState.
+      # This is the correct orchestration probe: it verifies all dependencies
+      # are up before the container is marked healthy and receives traffic.
+      # (The Dockerfile HEALTHCHECK uses /actuator/health for external/LB checks.)
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health/readiness | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+    networks:
+      - hospital-network
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Volumes
+# ─────────────────────────────────────────────────────────────────────────────
+volumes:
+  hospital_postgres_data:
+    driver: local
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Networks
+# ─────────────────────────────────────────────────────────────────────────────
+networks:
+  hospital-network:
+    driver: bridge

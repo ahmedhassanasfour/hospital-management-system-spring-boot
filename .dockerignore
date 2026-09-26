@@ -1,0 +1,56 @@
+# =============================================================================
+# .dockerignore — Hospital Management System
+# Excludes files that must NOT be sent to the Docker build context.
+# Keeping the context small speeds up builds and prevents accidental
+# inclusion of secrets, IDE files, or compiled artifacts.
+# =============================================================================
+
+# ── Build output ─────────────────────────────────────────────────────────────
+# The multi-stage Dockerfile builds the JAR inside the container.
+# The local target/ directory is never needed in the build context.
+target/
+
+# ── Version control ──────────────────────────────────────────────────────────
+.git/
+.gitignore
+.gitattributes
+
+# ── IDE & editor files ───────────────────────────────────────────────────────
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+*~
+
+# ── OS metadata ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Docker files themselves ───────────────────────────────────────────────────
+# The Compose file is not needed inside the image
+docker-compose*.yml
+.dockerignore
+
+# ── Local environment / secrets ───────────────────────────────────────────────
+# NEVER include .env files or local secret files in the Docker image
+.env
+.env.*
+*.env
+secrets/
+
+# ── Documentation & test artifacts ───────────────────────────────────────────
+docs/
+*.md
+HELP.md
+
+# ── Local file uploads directory ─────────────────────────────────────────────
+# Runtime uploads are generated at runtime inside the container, not pre-baked
+uploads/
+
+# ── Log files ────────────────────────────────────────────────────────────────
+*.log
+logs/
