@@ -157,7 +157,7 @@ erDiagram
     }
     PATIENTS {
         bigint id PK
-        bigint user_id FK UK
+        bigint user_id FK
         string nationalId UK
         string phone
         date dateOfBirth
@@ -166,7 +166,7 @@ erDiagram
     }
     DOCTORS {
         bigint id PK
-        bigint user_id FK UK
+        bigint user_id FK
         string specialization
         string licenseNumber UK
         string phone
@@ -206,7 +206,7 @@ erDiagram
     }
     MEDICAL_RECORDS {
         bigint id PK
-        bigint appointment_id FK UK
+        bigint appointment_id FK
         bigint patient_id FK
         bigint doctor_id FK
         string diagnosis
@@ -225,7 +225,7 @@ erDiagram
         bigint id PK
         bigint patient_id FK
         bigint doctor_id FK
-        bigint appointment_id FK UK
+        bigint appointment_id FK
         string notes
         datetime prescribedAt
     }
@@ -258,7 +258,7 @@ erDiagram
     }
     LAB_RESULTS {
         bigint id PK
-        bigint lab_order_id FK UK
+        bigint lab_order_id FK
         string resultValue
         string referenceRange
         string notes
